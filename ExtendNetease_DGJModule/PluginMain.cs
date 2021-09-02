@@ -17,11 +17,11 @@ namespace ExtendNetease_DGJModule
         
         public PluginMain()
         {
-            this.PluginName = "本地网易云喵块";
+            this.PluginName = "本地网易云汪块";
             try { this.PluginAuth = BiliUtils.GetUserNameByUserId(35744708); }
-            catch { this.PluginAuth = "西井丶"; }
-            this.PluginCont = "847529602@qq.com";
-            this.PluginDesc = "可以添加歌单和登录网易云喵~";
+            catch { this.PluginAuth = "Akazure"; }
+            this.PluginCont = "work@akazure.com";
+            this.PluginDesc = "可以添加歌单和登录网易云喵~ 现在可以点电台";
             this.PluginVer = NeteaseMusicApi.Version;
             base.Start();
         }

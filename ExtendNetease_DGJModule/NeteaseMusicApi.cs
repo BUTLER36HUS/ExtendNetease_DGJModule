@@ -228,7 +228,7 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
         /// <returns>服务器返回的Json</returns>
         public static string Search(string keyWords, SearchType type, int pageSize = 30, int offset = 0)
         {
-            System.Windows.MessageBox.Show($"type {type} {keyWords}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
+            //System.Windows.MessageBox.Show($"type {type} {keyWords}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
             IDictionary<string, object> data = new Dictionary<string, object>
             {
                 ["s"] = keyWords,
@@ -245,7 +245,7 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
         /// </summary>
         public static string SearchProgramInfo(long djID)
         {
-            System.Windows.MessageBox.Show($"电台 djID = {djID}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
+            //System.Windows.MessageBox.Show($"电台 djID = {djID}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
             IDictionary<string, object> data = new Dictionary<string, object>
             {
                 ["id"] = djID,
@@ -253,7 +253,7 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
             };
             CryptoHelper.Encrypted encrypted = CryptoHelper.WebApiEncrypt(data);
             string json = HttpHelper.HttpPost("https://music.163.com/weapi/dj/program/detail?csrf_token=", encrypted.GetFormdata(), userAgent: DefaultUserAgent);
-            System.Windows.MessageBox.Show($"电台 djID = {djID} 获取到:\n {json} " , "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
+            //System.Windows.MessageBox.Show($"电台 djID = {djID} 获取到:\n {json} " , "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
             return json;
         }
 
@@ -302,7 +302,7 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
         public static SongInfo[] SearchProgram(NeteaseSession session, long djID)
         {
             string json = SearchProgramInfo(djID);
-            System.Windows.MessageBox.Show($"djID {djID} \n results:\n {json}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
+            //System.Windows.MessageBox.Show($"djID {djID} \n results:\n {json}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
             JObject j = JObject.Parse(json);
             if (j["code"].ToObject<int>() == 200)
             {
@@ -352,7 +352,7 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
         public static IDictionary<long, bool> CheckMusicStatus(NeteaseSession session, bool isRadio = false, params long[] songIds)
         {
             JObject j = _GetPlayerUrl(session, Quality.SuperQuality, isRadio, songIds);
-            System.Windows.MessageBox.Show($"url获取结果:{j}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
+            //System.Windows.MessageBox.Show($"url获取结果:{j}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
             return j["data"].ToDictionary(p => p["id"].ToObject<long>(), p => p["code"].ToObject<int>() == 200);
         }
 

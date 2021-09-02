@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ExtendNetease_DGJModule</RootNamespace>
-    <AssemblyName>ExtendNetease_DGJModule</AssemblyName>
+    <AssemblyName>ExtendNetease_DGJModule_ProgramPlus</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>

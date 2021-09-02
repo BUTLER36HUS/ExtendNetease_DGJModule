@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // 有关程序集的一般信息由以下
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
-[assembly: AssemblyTitle("ExtendNetease_DGJModule")]
-[assembly: AssemblyDescription("可以添加歌单和登录网易云喵~")]
+[assembly: AssemblyTitle("ExtendNetease_DGJModule_ProgramPlus")]
+[assembly: AssemblyDescription("可以添加歌单和登录网易云喵~还有电台")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Executor")]
-[assembly: AssemblyProduct("ExtendNetease_DGJModule")]
-[assembly: AssemblyCopyright("Copyright © Executor 2020")]
+[assembly: AssemblyCompany("AkazureProject")]
+[assembly: AssemblyProduct("ExtendNetease_DGJModule_ProgramPlus")]
+[assembly: AssemblyCopyright("Copyright © BUTLER36HUS 2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // 可以指定所有值，也可以使用以下所示的 "*" 预置版本号和修订号
 //通过使用 "*"，如下所示:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.1.2.0")]
-[assembly: AssemblyFileVersion("1.1.2.0")]
+[assembly: AssemblyVersion("1.1.3.0")]
+[assembly: AssemblyFileVersion("1.1.3.0")]
