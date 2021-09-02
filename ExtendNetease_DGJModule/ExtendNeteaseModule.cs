@@ -50,8 +50,8 @@ namespace ExtendNetease_DGJModule
         {
             string authorName;
             try { authorName = BiliUtils.GetUserNameByUserId(35744708); }
-            catch { authorName = "西井丶"; }
-            SetInfo("本地网易云喵块", authorName, "847529602@qq.com", NeteaseMusicApi.Version, "可以添加歌单和登录网易云喵~");
+            catch { authorName = "Akazure"; }
+            SetInfo("本地网易云汪块", authorName, "work@akazure.com", NeteaseMusicApi.Version, "可以添加歌单和登录网易云汪~");
             this.GetType().GetProperty("IsPlaylistSupported", BindingFlags.SetProperty | BindingFlags.Public | BindingFlags.Instance).SetValue(this, true); // Enable Playlist Supporting
         }
 
@@ -135,7 +135,7 @@ namespace ExtendNetease_DGJModule
                 }
                 else
                 {
-                    string json = NeteaseMusicApi.Search(keyword, SearchType.SongList, 1);
+                    string json = NeteaseMusicApi.Search(keyword, SearchType.SongList,1);
                     JObject j = JObject.Parse(json);
                     if (j["code"].ToObject<int>() == 200)
                     {
@@ -185,6 +185,64 @@ namespace ExtendNetease_DGJModule
         {
             try
             {
+                // 进一步解析是否为电台节目
+                var _temp = keyword.Split(' ');
+                if (_temp.FirstOrDefault() == "电台") // 如果是电台节目
+                {
+                    long djID;
+                    if (long.TryParse(string.Join("", _temp.Skip(1)), out djID))
+                    {
+                        return SearchForProgram(djID);
+                    }
+                    else { 
+                        Log($"电台只接受id点歌: ExtendNeteaseModule.Search的参数keyword={keyword}有误");
+                        return null;
+                    }
+                }
+                else {
+                    return SearchForSongs(keyword);
+                }
+            }
+            catch {
+                Log($"未知错误: ExtendNeteaseModule.Search(keyword={keyword})");
+                return null;
+            }
+        }
+
+        private SongInfo SearchForProgram(long djID) {
+            try
+            {
+                NeteaseMusic.SongInfo[] songs = MainConfig.Instance.LoginSession.LoginStatus ?
+                    NeteaseMusicApi.SearchProgram(MainConfig.Instance.LoginSession, djID) :
+                    NeteaseMusicApi.SearchProgram(djID);
+                NeteaseMusic.SongInfo song = songs.FirstOrDefault();
+                return new SongInfo(this, song.Id.ToString(), song.Name, song.Artists.Select(p => p.Name).ToArray(), null);
+                //电台节目应该没有版权问题，也没有滚动歌词
+                { 
+                    //if (song?.CanPlay == true)
+                    //{
+                    //    return new SongInfo(this, song.Id.ToString(), song.Name, song.Artists.Select(p => p.Name).ToArray(), lyric?.GetLyricText());
+                    //}
+                    //else
+                    //{
+                    //    Log($"{song.ArtistNames} - {song.Name} : 暂无版权喵");
+                    //}
+                }
+            }
+            catch (WebException e)
+            {
+                Log($"搜索单曲失败了喵:{e.Message}\r\n这是由于网络原因导致搜索失败, 如果多次出现, 请检查你的网络连接喵。");
+            }
+            catch (Exception e)
+            {
+                Log($"搜索单曲失败了喵:{e.Message}");
+            }
+            return null;
+        }
+
+        private SongInfo SearchForSongs(string keyword) {
+            try
+            {
                 NeteaseMusic.SongInfo[] songs = MainConfig.Instance.LoginSession.LoginStatus ?
                     NeteaseMusicApi.SearchSongs(MainConfig.Instance.LoginSession, keyword, 1) :
                     NeteaseMusicApi.SearchSongs(keyword, 1);
@@ -216,6 +274,7 @@ namespace ExtendNetease_DGJModule
                 Log($"搜索单曲失败了喵:{e.Message}");
             }
             return null;
+
         }
 
         private LyricInfo _GetLyric(long id, bool useCache = true)

@@ -228,6 +228,7 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
         /// <returns>服务器返回的Json</returns>
         public static string Search(string keyWords, SearchType type, int pageSize = 30, int offset = 0)
         {
+            System.Windows.MessageBox.Show($"type {type} {keyWords}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
             IDictionary<string, object> data = new Dictionary<string, object>
             {
                 ["s"] = keyWords,
@@ -239,6 +240,23 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
             string json = HttpHelper.HttpPost("https://music.163.com/weapi/search/get", encrypted.GetFormdata(), userAgent: DefaultUserAgent);
             return json;
         }
+        /// <summary>
+        /// 搜索电台节目
+        /// </summary>
+        public static string SearchProgramInfo(long djID)
+        {
+            System.Windows.MessageBox.Show($"电台 djID = {djID}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
+            IDictionary<string, object> data = new Dictionary<string, object>
+            {
+                ["id"] = djID,
+                ["csrf_token"]=""
+            };
+            CryptoHelper.Encrypted encrypted = CryptoHelper.WebApiEncrypt(data);
+            string json = HttpHelper.HttpPost("https://music.163.com/weapi/dj/program/detail?csrf_token=", encrypted.GetFormdata(), userAgent: DefaultUserAgent);
+            System.Windows.MessageBox.Show($"电台 djID = {djID} 获取到:\n {json} " , "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
+            return json;
+        }
+
         /// <summary>
         /// 按给定的关键词搜索单曲
         /// </summary>
@@ -260,7 +278,7 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
             if (j["code"].ToObject<int>() == 200)
             {
                 SongInfo[] result = j["result"]["songs"].Select(p => new SongInfo(p)).ToArray();
-                IDictionary<long, bool> canPlayDic = CheckMusicStatus(session, result.Select(p => p.Id).ToArray());
+                IDictionary<long, bool> canPlayDic = CheckMusicStatus(session, false, result.Select(p => p.Id).ToArray());
                 foreach (SongInfo song in result)
                 {
                     if (canPlayDic.TryGetValue(song.Id, out bool canPlay))
@@ -277,40 +295,87 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
                 throw exception;
             }
         }
-        /// <summary>
-        /// 检查给定ID对应的音乐有无版权
-        /// </summary>
-        /// <param name="bitRate">比特率</param>
-        /// <param name="songIds">音乐IDs</param>
-        /// <returns></returns>
-        public static IDictionary<long, bool> CheckMusicStatus(params long[] songIds)
-            => CheckMusicStatus(null, songIds);
-        /// <summary>
-        /// 检查给定ID对应的音乐有无版权
-        /// </summary>
-        /// <param name="bitRate">比特率</param>
-        /// <param name="songIds">音乐IDs</param>
-        /// <returns></returns>
-        public static IDictionary<long, bool> CheckMusicStatus(NeteaseSession session, params long[] songIds)
+
+        public static SongInfo[] SearchProgram(long djID)
+            => SearchProgram(null, djID);
+
+        public static SongInfo[] SearchProgram(NeteaseSession session, long djID)
         {
-            JObject j = _GetPlayerUrl(session, Quality.SuperQuality, songIds);
+            string json = SearchProgramInfo(djID);
+            System.Windows.MessageBox.Show($"djID {djID} \n results:\n {json}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
+            JObject j = JObject.Parse(json);
+            if (j["code"].ToObject<int>() == 200)
+            {
+                SongInfo[] result;
+                IDictionary<long, bool> canPlayDic;
+                long realSongID = int.Parse(j["program"]["mainSong"]["id"].ToString());
+                canPlayDic = CheckMusicStatus(session, true, new long[1] { realSongID });
+                result = new SongInfo[1] { 
+                    new SongInfo(
+                        id:realSongID,
+                        name:j["program"]["mainSong"]["name"].ToString(),
+                        new ArtistInfo[1] { new ArtistInfo(0,j["program"]["mainSong"]["artists"].FirstOrDefault()["name"].ToString()) },
+                    new AlbumInfo(
+                        0, $"电台《{j["program"]["dj"]["brand"]}》", DateTime.Now, 1),
+                    TimeSpan.FromMilliseconds(GetProgramDuration(j)), 
+                    false) //假设电台节目都是免费的 TODO 付费电台可能产生bug
+                };
+                result[0].CanPlay = true;
+                return result;
+            }
+            else
+            {
+                NotImplementedException exception = new NotImplementedException($"未知的服务器返回");
+                exception.Data.Add("Response", j.ToString());
+                throw exception;
+            }
+        }
+
+        private static double GetProgramDuration(JObject j) { //我是sb
+            return double.Parse(j["program"]["mainSong"]["duration"].ToString());
+        }
+
+        /// <summary>
+        /// 检查给定ID对应的音乐有无版权
+        /// </summary>
+        /// <param name="bitRate">比特率</param>
+        /// <param name="songIds">音乐IDs</param>
+        /// <returns></returns>
+        public static IDictionary<long, bool> CheckMusicStatus(bool isRadio = false, params long[] songIds)
+            => CheckMusicStatus(null, isRadio, songIds);
+        /// <summary>
+        /// 检查给定ID对应的音乐有无版权
+        /// </summary>
+        /// <param name="bitRate">比特率</param>
+        /// <param name="songIds">音乐IDs</param>
+        /// <returns></returns>
+        public static IDictionary<long, bool> CheckMusicStatus(NeteaseSession session, bool isRadio = false, params long[] songIds)
+        {
+            JObject j = _GetPlayerUrl(session, Quality.SuperQuality, isRadio, songIds);
+            System.Windows.MessageBox.Show($"url获取结果:{j}", "Debug - 本地网易云汪块", 0, System.Windows.MessageBoxImage.Information);
             return j["data"].ToDictionary(p => p["id"].ToObject<long>(), p => p["code"].ToObject<int>() == 200);
         }
+
+        //public static IDictionary<long, bool> CheckMusicStatus(NeteaseSession session, bool isDianTai, long djIds) {
+        //    if (!isDianTai) return null;
+        //    JObject j = _GetPlayerUrl(session, Quality.SuperQuality, songIds);
+        //    return j["data"].ToDictionary(p => p["id"].ToObject<long>(), p => p["code"].ToObject<int>() == 200);
+        //}
         /// <summary>
         /// 批量获取单曲下载链接
         /// </summary>
         /// <param name="bitRate">比特率上限</param>
         /// <param name="songIds">单曲IDs</param>
-        public static IDictionary<long, DownloadSongInfo> GetSongsUrl(Quality bitRate = Quality.SuperQuality, params long[] songIds)
-            => GetSongsUrl(null, bitRate, songIds);
+        public static IDictionary<long, DownloadSongInfo> GetSongsUrl(Quality bitRate = Quality.SuperQuality, bool isRadio = false, params long[] songIds)
+            => GetSongsUrl(null, bitRate, isRadio,  songIds);
         /// <summary>
         /// 批量获取单曲下载链接
         /// </summary>
         /// <param name="bitRate">比特率上限</param>
         /// <param name="songIds">单曲IDs</param>
-        public static IDictionary<long, DownloadSongInfo> GetSongsUrl(NeteaseSession session, Quality bitRate = Quality.SuperQuality, params long[] songIds)
+        public static IDictionary<long, DownloadSongInfo> GetSongsUrl(NeteaseSession session, Quality bitRate = Quality.SuperQuality, bool isRadio = false, params long[] songIds)
         {
-            JObject j = _GetPlayerUrl(session, bitRate, songIds);
+            JObject j = _GetPlayerUrl(session, bitRate, isRadio, songIds);
             return j["data"].ToDictionary(p => p["id"].ToObject<long>(), p => new DownloadSongInfo(p["id"].ToObject<long>(), p["br"].ToObject<int>(), bitRate, p["url"].ToString(), p["type"].ToString()));
         }
         /// <summary>
@@ -320,16 +385,18 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
         /// <param name="bitRate"></param>
         /// <param name="songIds"></param>
         /// <returns></returns>
-        private static JObject _GetPlayerUrl(NeteaseSession session, Quality bitRate = Quality.SuperQuality, params long[] songIds)
+        private static JObject _GetPlayerUrl(NeteaseSession session, Quality bitRate = Quality.SuperQuality, bool isRadio = false, params long[] songIds)
         {
             IDictionary<string, object> data = new Dictionary<string, object>
             {
                 ["ids"] = songIds,
-                ["br"] = (int)bitRate
+                ["level"]="standard",
+                ["encodeType"]= "mp3",
+                ["csrf_token"] = ""
             };
             CryptoHelper.Encrypted encrypted = CryptoHelper.WebApiEncrypt(data);
-            string json = session == null ? HttpHelper.HttpPost("https://music.163.com/weapi/song/enhance/player/url", encrypted.GetFormdata(), userAgent: DefaultUserAgent) :
-                session.Session.HttpPost("https://music.163.com/weapi/song/enhance/player/url", encrypted.GetFormdata(), userAgent: DefaultUserAgent);
+            string json = session == null ? HttpHelper.HttpPost("https://music.163.com/weapi/song/enhance/player/url/v1?csrf_token=", encrypted.GetFormdata(), userAgent: DefaultUserAgent) :
+                session.Session.HttpPost("https://music.163.com/weapi/song/enhance/player/url/v1?csrf_token=", encrypted.GetFormdata(), userAgent: DefaultUserAgent);
             JObject j = JObject.Parse(json);
             if (j["code"].ToObject<int>() == 200)
             {
@@ -342,6 +409,7 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
                 throw exception;
             }
         }
+
         /// <summary>
         /// 获取给定单曲ID的歌词
         /// </summary>
@@ -411,7 +479,7 @@ namespace ExtendNetease_DGJModule.NeteaseMusic
                 case 200:
                     {
                         SongInfo[] result = j["playlist"]["tracks"].Select(p => new SongInfo(p)).ToArray();
-                        IDictionary<long, bool> canPlayDic = CheckMusicStatus(session, result.Select(p => p.Id).ToArray());
+                        IDictionary<long, bool> canPlayDic = CheckMusicStatus(session,false, result.Select(p => p.Id).ToArray());
                         foreach (SongInfo song in result)
                         {
                             if (canPlayDic.TryGetValue(song.Id, out bool canPlay))
