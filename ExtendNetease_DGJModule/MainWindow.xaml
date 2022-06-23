@@ -5,15 +5,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ExtendNetease_DGJModule"
         xmlns:netease="clr-namespace:ExtendNetease_DGJModule.NeteaseMusic"
-        mc:Ignorable="d"
+        xmlns:cefsharp ="clr-namespace:CefSharp.Wpf;assembly=CefSharp.Wpf"
         Title="管理界面 - 本地网易云喵块    用户:未登录" SizeToContent="WidthAndHeight" ResizeMode="CanMinimize" Closing="Window_Closing">
-    <Window.Resources>
+    <!--<Window.Resources>
         <local:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
-    </Window.Resources>
-    <StackPanel Orientation="Horizontal">
-        <GroupBox Header="登录" VerticalAlignment="Stretch" Margin="2,2,0,5" Width="270">
+    </Window.Resources>-->
+    <StackPanel Orientation="Vertical">
+        <GroupBox Header="浏览器">
+            <cefsharp:ChromiumWebBrowser x:Name="browser" Address="https://music.163.com" Width="1280" Height="720"></cefsharp:ChromiumWebBrowser>
+        </GroupBox>
+        <GroupBox Margin="0,0,0,0">
+            <Button x:Name="GetCookieButton" Content="获取Cookie" Width="200" Height="50" Click="GetCookies"></Button>
+        </GroupBox>
+        <!--<GroupBox Header="登录" VerticalAlignment="Stretch" Margin="2,2,0,5" Width="270">
             <StackPanel>
                 <DockPanel>
+                    
                     <TextBlock TextWrapping="NoWrap" Text="手机号/邮箱:" VerticalAlignment="Center"/>
                     <TextBox x:Name="LoginUserNameBox" Height="23" TextWrapping="Wrap" Margin="3,0,0,0" Padding="0,2,0,0" KeyDown="OnEnterKeyDown"/>
                 </DockPanel>
@@ -23,14 +30,14 @@
                 </DockPanel>
                 <Button x:Name="LoginBtn" Content="登录" Margin="0,3,0,0" Height="30" FontSize="14" Click="Login_Click" MouseRightButtonDown="LogOut_Click"/>
             </StackPanel>
-        </GroupBox>
-        <GroupBox Header="音乐品质" Margin="2,2,2,5">
+        </GroupBox>-->
+        <!--<GroupBox Header="音乐品质" Margin="2,2,2,5">
             <StackPanel x:Name="QualityPanel" Orientation="Horizontal">
                 <RadioButton Content="标准(128Kb/s)" IsChecked="{Binding Quality,Converter={StaticResource EnumToBooleanConverter},ConverterParameter={x:Static netease:Quality.LowQuality}}"/>
                 <RadioButton Content="较高(192Kb/s)" IsChecked="{Binding Quality,Converter={StaticResource EnumToBooleanConverter},ConverterParameter={x:Static netease:Quality.MediumQuality}}"/>
                 <RadioButton Content="极高(320Kb/s)" IsChecked="{Binding Quality,Converter={StaticResource EnumToBooleanConverter},ConverterParameter={x:Static netease:Quality.HighQuality}}"/>
             </StackPanel>
-        </GroupBox>
+        </GroupBox>-->
         <!--<GroupBox Header="网易云用户信息" Margin="2,2,2,5" Width="270">
             <StackPanel>
                 <StackPanel Orientation="Horizontal">
